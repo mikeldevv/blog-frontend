@@ -40,14 +40,14 @@ function SignUp() {
 
     const options = {
       method: "POST",
-      url: "http://localhost:5259/api/Author/Register",
+      url: process.env.NEXT_PUBLIC_API_URL + `Author/Register`,
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(data),
     };
 
-    fetch("http://localhost:5259/api/Author/Register", options)
+    fetch(process.env.NEXT_PUBLIC_API_URL + `Author/Register`, options)
       .then((response) => response.json())
       .then((response) => console.log(response))
       .catch((err) => console.error(err));
