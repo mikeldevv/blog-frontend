@@ -1,33 +1,34 @@
 import { Fragment, useState } from "react";
 
-function Login() {
+function VerifyUser() {
   const [emailAddress, setEmailAddress] = useState("");
-  const [password, setPassword] = useState("");
+  const [token, setToken] = useState("");
 
   const handleEmailAddressChange = (value) => {
     setEmailAddress(value);
   };
-  const handlePasswordChange = (value) => {
-    setPassword(value);
+  const handleTokenChange = (value) => {
+    setToken(value);
   };
 
-  const loginHandler = async (e) => {
+  const verifyuserHandler = async (e) => {
     e.preventDefault();
+
     const data = {
-      EmailAddress: emailAddress,
-      Password: password,
+      emailAddress: emailAddress,
+      token: token,
     };
 
     const options = {
-      method: "POST",
-      url: process.env.NEXT_PUBLIC_API_URL + `Author/Login`,
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
+      method: "PATCH",
+      url: process.env.NEXT_PUBLIC_API_URL + `Author/VerifyUser`,
     };
-
-    fetch(process.env.NEXT_PUBLIC_API_URL + `Author/Login`, options)
+    fetch(
+      process.env.NEXT_PUBLIC_API_URL +
+        `Author/VerifyUser?` +
+        new URLSearchParams(data).toString(),
+      options
+    )
       .then((response) => response.json())
       .then((response) => console.log(response))
       .catch((err) => console.error(err));
@@ -40,9 +41,9 @@ function Login() {
           style={{
             margin: "50px 0",
           }}
-          onSubmit={loginHandler}
+          onSubmit={verifyuserHandler}
         >
-          <h1 className="h3 mb-3 fw-normal">Please sign in</h1>
+          <h1 className="h3 mb-3 fw-normal">Account Verification</h1>
 
           <div className="form-floating">
             <input
@@ -56,16 +57,16 @@ function Login() {
           </div>
           <div className="form-floating">
             <input
-              type="password"
+              type="text"
               className="form-control"
               id="floatingInput"
-              placeholder="Password"
-              onChange={(e) => handlePasswordChange(e.target.value)}
+              placeholder="Token"
+              onChange={(e) => handleTokenChange(e.target.value)}
             />
-            <label htmlFor="floatingPassword">Password</label>
+            <label htmlFor="floatingPassword">Token</label>
           </div>
           <button className="w-100 btn btn-lg btn-primary" type="submit">
-            Sign In
+            Verify
           </button>
           <p className="mt-5 mb-3 text-muted">&copy; 2022 MikeMilly</p>
         </form>
@@ -74,4 +75,4 @@ function Login() {
   );
 }
 
-export default Login;
+export default VerifyUser;
