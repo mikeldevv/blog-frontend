@@ -1,57 +1,66 @@
 import { Fragment, useState } from "react";
+import { useFormik } from "formik";
+import * as yup from "yup";
+import axios from "axios";
+import { useRouter } from "next/router";
+
+const validationSchema = yup.object({
+  emailAddress: yup
+    .string()
+    .email("Enter a valid Email format")
+    .required("Email is required!"),
+  firstname: yup
+    .string()
+    .min(3, "Must have First Name")
+    .required("First Name is required!"),
+  lastname: yup
+    .string()
+    .min(3, "Must have Last Name")
+    .required("Last Name is required!"),
+  username: yup
+    .string()
+    .min(4, "Username must be at least 4 characters")
+    .required("Username is required!"),
+  password: yup
+    .string()
+    .min(8, "Password must be at least 8 character")
+    .required("Password is required!"),
+  description: yup
+    .string()
+    .min(50, "Description must be at least 50 characters")
+    .required("Description is required!"),
+});
 
 function SignUp() {
-  const [emailAddress, setEmailAddress] = useState("");
-  const [firstname, setFirstname] = useState("");
-  const [lastname, setLastname] = useState("");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [description, setDescription] = useState("");
+  const [success, setSuccess] = useState(null);
+  const router = useRouter();
 
-  const handleEmailAddressChange = (value) => {
-    setEmailAddress(value);
-  };
-  const handleFirstNameChange = (value) => {
-    setFirstname(value);
-  };
-  const handleLastNameChange = (value) => {
-    setLastname(value);
-  };
-  const handleUsernameChange = (value) => {
-    setUsername(value);
-  };
-  const handlePasswordChange = (value) => {
-    setPassword(value);
-  };
-  const handleDescriptionChange = (value) => {
-    setDescription(value);
-  };
+  const onSubmit = async (values) => {
+    const { ...data } = values;
+    const response = await axios
+      .post(process.env.NEXT_PUBLIC_API_URL + `Author/Register`, data)
+      .catch((err) => {
+        if (err && err.response) console.log("Error: ", err);
+      });
 
-  const signupHandler = async (e) => {
-    e.preventDefault();
-    const data = {
-      EmailAddress: emailAddress,
-      FirstName: firstname,
-      LastName: lastname,
-      Username: username,
-      Password: password,
-      Description: description,
-    };
-
-    const options = {
-      method: "POST",
-      url: process.env.NEXT_PUBLIC_API_URL + `Author/Register`,
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    };
-
-    fetch(process.env.NEXT_PUBLIC_API_URL + `Author/Register`, options)
-      .then((response) => response.json())
-      .then((response) => console.log(response))
-      .catch((err) => console.error(err));
+    if (response && response.data) {
+      setSuccess(response.data.message);
+      router.replace(`/verifyuser`);
+    }
   };
+  const formik = useFormik({
+    initialValues: {
+      emailAddress: "",
+      firstname: "",
+      lastname: "",
+      username: "",
+      password: "",
+      description: "",
+    },
+    validateOnBlur: true,
+    onSubmit,
+    validationSchema: validationSchema,
+  });
 
   return (
     <Fragment>
@@ -60,19 +69,36 @@ function SignUp() {
           style={{
             margin: "50px 0",
           }}
-          onSubmit={signupHandler}
+          onSubmit={formik.handleSubmit}
         >
           <h1 className="h3 mb-3 fw-normal">Please sign up</h1>
+
+          {success ? (
+            <p style={{ textTransform: "capitalize", color: "green" }}>
+              {success}
+            </p>
+          ) : (
+            ""
+          )}
 
           <div className="form-floating">
             <input
               type="email"
               className="form-control"
               id="floatingInput"
+              name="emailAddress"
               placeholder="name@example.com"
-              onChange={(e) => handleEmailAddressChange(e.target.value)}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              value={formik.values.emailAddress}
             />
-            <label htmlFor="floatingInput">Email address</label>
+            {formik.touched.emailAddress && formik.errors.emailAddress ? (
+              <p style={{ textTransform: "capitalize", color: "red" }}>
+                {formik.errors.emailAddress}
+              </p>
+            ) : null}
+
+            <label htmlFor="emailAddress">Email address</label>
           </div>
 
           <div className="form-floating">
@@ -80,10 +106,19 @@ function SignUp() {
               type="text"
               className="form-control"
               id="floatingInput"
+              name="firstname"
               placeholder="First Name"
-              onChange={(e) => handleFirstNameChange(e.target.value)}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              value={formik.values.firstname}
             />
-            <label htmlFor="floatingInput">First Name</label>
+            {formik.touched.firstname && formik.errors.firstname ? (
+              <p style={{ textTransform: "capitalize", color: "red" }}>
+                {formik.errors.firstname}
+              </p>
+            ) : null}
+
+            <label htmlFor="firstname">First Name</label>
           </div>
 
           <div className="form-floating">
@@ -91,10 +126,19 @@ function SignUp() {
               type="text"
               className="form-control"
               id="floatingInput"
+              name="lastname"
               placeholder="Last Name"
-              onChange={(e) => handleLastNameChange(e.target.value)}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              value={formik.values.lastname}
             />
-            <label htmlFor="floatingInput">Last Name</label>
+            {formik.touched.lastname && formik.errors.lastname ? (
+              <p style={{ textTransform: "capitalize", color: "red" }}>
+                {formik.errors.lastname}
+              </p>
+            ) : null}
+
+            <label htmlFor="lastname">Last Name</label>
           </div>
 
           <div className="form-floating">
@@ -102,10 +146,19 @@ function SignUp() {
               type="text"
               className="form-control"
               id="floatingInput"
+              name="username"
               placeholder="Username"
-              onChange={(e) => handleUsernameChange(e.target.value)}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              value={formik.values.username}
             />
-            <label htmlFor="floatingInput">Username</label>
+            {formik.touched.username && formik.errors.username ? (
+              <p style={{ textTransform: "capitalize", color: "red" }}>
+                {formik.errors.username}
+              </p>
+            ) : null}
+
+            <label htmlFor="username">Username</label>
           </div>
 
           <div className="form-floating">
@@ -113,10 +166,19 @@ function SignUp() {
               type="password"
               className="form-control"
               id="floatingInput"
+              name="password"
               placeholder="Password"
-              onChange={(e) => handlePasswordChange(e.target.value)}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              value={formik.values.password}
             />
-            <label htmlFor="floatingPassword">Password</label>
+            {formik.touched.password && formik.errors.password ? (
+              <p style={{ textTransform: "capitalize", color: "red" }}>
+                {formik.errors.password}
+              </p>
+            ) : null}
+
+            <label htmlFor="password">Password</label>
           </div>
 
           <div className="form-floating">
@@ -124,10 +186,19 @@ function SignUp() {
               type="text"
               className="form-control"
               id="floatingInput"
+              name="description"
               placeholder="Description"
-              onChange={(e) => handleDescriptionChange(e.target.value)}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              value={formik.values.description}
             />
-            <label htmlFor="floatingInput">Description</label>
+            {formik.touched.description && formik.errors.description ? (
+              <p style={{ textTransform: "capitalize", color: "red" }}>
+                {formik.errors.description}
+              </p>
+            ) : null}
+
+            <label htmlFor="description">Description</label>
           </div>
 
           <button className="w-100 btn btn-lg btn-primary" type="submit">
