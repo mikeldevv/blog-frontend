@@ -1,38 +1,52 @@
 import { Fragment, useState } from "react";
+import { useFormik } from "formik";
+import * as yup from "yup";
+import axios from "axios";
+import { useRouter } from "next/router";
+
+const validationSchema = yup.object({
+  emailAddress: yup
+    .string()
+    .email("Enter a valid Email format")
+    .required("Email is required!"),
+  token: yup.string().min(6).required("Please enter token!"),
+});
 
 function VerifyUser() {
-  const [emailAddress, setEmailAddress] = useState("");
-  const [token, setToken] = useState("");
+  const [success, setSuccess] = useState(null);
+  const [error, setError] = useState(null);
+  const router = useRouter();
 
-  const handleEmailAddressChange = (value) => {
-    setEmailAddress(value);
+  const onSubmit = async (values) => {
+    const { ...data } = values;
+    const response = await axios
+      .patch(
+        process.env.NEXT_PUBLIC_API_URL +
+          `Author/VerifyUser?` +
+          new URLSearchParams(data).toString(),
+        data
+      )
+      .catch((err) => {
+        if (err && err.response) setError(err.response.data.message);
+        setSuccess(null);
+      });
+
+    if (response && response.data) {
+      setError(null);
+      setSuccess(response.data.message);
+      formik.resetForm();
+      router.replace(`/login`);
+    }
   };
-  const handleTokenChange = (value) => {
-    setToken(value);
-  };
-
-  const verifyuserHandler = async (e) => {
-    e.preventDefault();
-
-    const data = {
-      emailAddress: emailAddress,
-      token: token,
-    };
-
-    const options = {
-      method: "PATCH",
-      url: process.env.NEXT_PUBLIC_API_URL + `Author/VerifyUser`,
-    };
-    fetch(
-      process.env.NEXT_PUBLIC_API_URL +
-        `Author/VerifyUser?` +
-        new URLSearchParams(data).toString(),
-      options
-    )
-      .then((response) => response.json())
-      .then((response) => console.log(response))
-      .catch((err) => console.error(err));
-  };
+  const formik = useFormik({
+    initialValues: {
+      emailAddress: "",
+      token: "",
+    },
+    validateOnBlur: true,
+    onSubmit,
+    validationSchema: validationSchema,
+  });
 
   return (
     <Fragment>
@@ -41,29 +55,58 @@ function VerifyUser() {
           style={{
             margin: "50px 0",
           }}
-          onSubmit={verifyuserHandler}
+          onSubmit={formik.handleSubmit}
         >
           <h1 className="h3 mb-3 fw-normal">Account Verification</h1>
+          {!error && success ? (
+            <p style={{ textTransform: "capitalize", color: "green" }}>
+              {success}
+            </p>
+          ) : (
+            ""
+          )}
+
+          {!success && error ? (
+            <p style={{ textTransform: "capitalize", color: "red" }}>{error}</p>
+          ) : (
+            ""
+          )}
 
           <div className="form-floating">
             <input
               type="email"
               className="form-control"
               id="floatingInput"
+              name="emailAddress"
               placeholder="name@example.com"
-              onChange={(e) => handleEmailAddressChange(e.target.value)}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              value={formik.values.emailAddress}
             />
-            <label htmlFor="floatingInput">Email address</label>
+            {formik.touched.emailAddress && formik.errors.emailAddress ? (
+              <p style={{ textTransform: "capitalize", color: "red" }}>
+                {formik.errors.emailAddress}
+              </p>
+            ) : null}
+            <label htmlFor="emailAddress">Email address</label>
           </div>
           <div className="form-floating">
             <input
               type="text"
               className="form-control"
               id="floatingInput"
+              name="token"
               placeholder="Token"
-              onChange={(e) => handleTokenChange(e.target.value)}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              value={formik.values.token}
             />
-            <label htmlFor="floatingPassword">Token</label>
+            {formik.touched.token && formik.errors.token ? (
+              <p style={{ textTransform: "capitalize", color: "red" }}>
+                {formik.errors.token}
+              </p>
+            ) : null}
+            <label htmlFor="token">Token</label>
           </div>
           <button className="w-100 btn btn-lg btn-primary" type="submit">
             Verify

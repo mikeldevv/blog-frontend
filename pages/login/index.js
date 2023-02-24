@@ -1,37 +1,56 @@
 import { Fragment, useState } from "react";
+import { useFormik } from "formik";
+import * as yup from "yup";
+import axios from "axios";
+import { useRouter } from "next/router";
+
+const validationSchema = yup.object({
+  emailAddress: yup
+    .string()
+    .email("Enter a valid Email format")
+    .required("Email is required!"),
+  password: yup
+    .string()
+    .min(8, "Password must be at least 8 character")
+    .required("Password is required!"),
+});
 
 function Login() {
-  const [emailAddress, setEmailAddress] = useState("");
-  const [password, setPassword] = useState("");
+  const [success, setSuccess] = useState(null);
+  const [error, setError] = useState(null);
+  const router = useRouter();
 
-  const handleEmailAddressChange = (value) => {
-    setEmailAddress(value);
+  const onSubmit = async (values) => {
+    const { ...data } = values;
+    try {
+      const response = await axios.post(
+        process.env.NEXT_PUBLIC_API_URL + `Author/Login`,
+        data
+      );
+      if (response?.data) {
+        setError(null);
+        setSuccess(response.data.message);
+        // set localstorage for logged in user and auth token
+
+        localStorage.setItem("jwt", response.data?.data?.accessToken);
+
+        formik.resetForm();
+      }
+    } catch (error) {
+      if (error && error.response) setError(error.response.data.message);
+      setSuccess(null);
+    }
   };
-  const handlePasswordChange = (value) => {
-    setPassword(value);
-  };
 
-  const loginHandler = async (e) => {
-    e.preventDefault();
-    const data = {
-      EmailAddress: emailAddress,
-      Password: password,
-    };
-
-    const options = {
-      method: "POST",
-      url: process.env.NEXT_PUBLIC_API_URL + `Author/Login`,
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    };
-
-    fetch(process.env.NEXT_PUBLIC_API_URL + `Author/Login`, options)
-      .then((response) => response.json())
-      .then((response) => console.log(response))
-      .catch((err) => console.error(err));
-  };
+  const formik = useFormik({
+    initialValues: {
+      emailAddress: "",
+      password: "",
+    },
+    validateOnBlur: true,
+    onSubmit,
+    validationSchema: validationSchema,
+  });
 
   return (
     <Fragment>
@@ -40,29 +59,60 @@ function Login() {
           style={{
             margin: "50px 0",
           }}
-          onSubmit={loginHandler}
+          onSubmit={formik.handleSubmit}
         >
           <h1 className="h3 mb-3 fw-normal">Please sign in</h1>
+          {!error && success ? (
+            <p style={{ textTransform: "capitalize", color: "green" }}>
+              {success}
+            </p>
+          ) : (
+            ""
+          )}
+
+          {!success && error ? (
+            <p style={{ textTransform: "capitalize", color: "red" }}>{error}</p>
+          ) : (
+            ""
+          )}
 
           <div className="form-floating">
             <input
               type="email"
               className="form-control"
               id="floatingInput"
+              name="emailAddress"
               placeholder="name@example.com"
-              onChange={(e) => handleEmailAddressChange(e.target.value)}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              value={formik.values.emailAddress}
             />
-            <label htmlFor="floatingInput">Email address</label>
+            {formik.touched.emailAddress && formik.errors.emailAddress ? (
+              <p style={{ textTransform: "capitalize", color: "red" }}>
+                {formik.errors.emailAddress}
+              </p>
+            ) : null}
+
+            <label htmlFor="emailAddress">Email address</label>
           </div>
           <div className="form-floating">
             <input
               type="password"
               className="form-control"
               id="floatingInput"
+              name="password"
               placeholder="Password"
-              onChange={(e) => handlePasswordChange(e.target.value)}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              value={formik.values.password}
             />
-            <label htmlFor="floatingPassword">Password</label>
+            {formik.touched.password && formik.errors.password ? (
+              <p style={{ textTransform: "capitalize", color: "red" }}>
+                {formik.errors.password}
+              </p>
+            ) : null}
+
+            <label htmlFor="password">Password</label>
           </div>
           <button className="w-100 btn btn-lg btn-primary" type="submit">
             Sign In

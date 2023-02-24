@@ -33,6 +33,7 @@ const validationSchema = yup.object({
 
 function SignUp() {
   const [success, setSuccess] = useState(null);
+  const [error, setError] = useState(null);
   const router = useRouter();
 
   const onSubmit = async (values) => {
@@ -40,11 +41,14 @@ function SignUp() {
     const response = await axios
       .post(process.env.NEXT_PUBLIC_API_URL + `Author/Register`, data)
       .catch((err) => {
-        if (err && err.response) console.log("Error: ", err);
+        if (err && err.response) setError(err.response.data.message);
+        setSuccess(null);
       });
 
     if (response && response.data) {
+      setError(null);
       setSuccess(response.data.message);
+      formik.resetForm();
       router.replace(`/verifyuser`);
     }
   };
@@ -73,10 +77,16 @@ function SignUp() {
         >
           <h1 className="h3 mb-3 fw-normal">Please sign up</h1>
 
-          {success ? (
+          {!error && success ? (
             <p style={{ textTransform: "capitalize", color: "green" }}>
               {success}
             </p>
+          ) : (
+            ""
+          )}
+
+          {!success && error ? (
+            <p style={{ textTransform: "capitalize", color: "red" }}>{error}</p>
           ) : (
             ""
           )}
